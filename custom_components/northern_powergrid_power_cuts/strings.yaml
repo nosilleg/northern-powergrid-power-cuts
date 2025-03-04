@@ -1,0 +1,27 @@
+# Integration strings
+title: Northern Powergrid Power Cuts
+
+# Config flow
+config:
+  step:
+    user:
+      title: Northern Powergrid Power Cuts
+      description: Set up Northern Powergrid Power Cuts integration to monitor power outages in your area.
+      data:
+        postcode: Postcode
+        name: Name
+
+  error:
+    cannot_connect: Failed to connect to Northern Powergrid API
+    invalid_postcode: Invalid postcode format
+    unknown: Unexpected error occurred
+
+# Options flow
+options:
+  step:
+    init:
+      title: Northern Powergrid Power Cuts Options
+      description: Update your Northern Powergrid Power Cuts settings
+      data:
+        postcode: Postcode
+        name: Name

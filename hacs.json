@@ -1,0 +1,6 @@
+{
+    "name": "Northern Powergrid Power Cuts",
+    "render_readme": true,
+    "homeassistant": "2023.8.0",
+    "country": "GB"
+}
