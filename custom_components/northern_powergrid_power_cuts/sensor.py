@@ -19,6 +19,8 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 from homeassistant.helpers.entity import Entity, EntityCategory
+from homeassistant.helpers import config_validation as cv
+import voluptuous as vol
 
 from .const import (
     DOMAIN,
@@ -28,6 +30,18 @@ from .const import (
     CONF_POSTCODE,
     CONF_NAME,
     DEFAULT_NAME,
+)
+
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+                vol.Required(CONF_POSTCODE): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
 )
 
 _LOGGER = logging.getLogger(__name__)
