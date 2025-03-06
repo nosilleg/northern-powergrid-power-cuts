@@ -21,7 +21,7 @@ This integration provides information about power cuts in the Northern Powergrid
 1. Ensure [HACS](https://hacs.xyz/) is installed
 2. Add this repository as a custom repository in HACS:
    - Go to HACS → Integrations → ⋮ (top right) → Custom repositories
-   - URL: `https://github.com/nosilleg/ha-northern-powergrid-power-cuts`
+   - URL: `https://github.com/nosilleg/northern-powergrid-power-cuts`
    - Category: Integration
 3. Click "Add"
 4. Search for "Northern Powergrid Power Cuts" in the Integrations tab

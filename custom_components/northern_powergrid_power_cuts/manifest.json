@@ -4,10 +4,10 @@
   "codeowners": ["@nosilleg"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/nosilleg/ha-northern-powergrid-power-cuts",
+  "documentation": "https://github.com/nosilleg/northern-powergrid-power-cuts",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/nosilleg/ha-northern-powergrid-power-cuts/issues",
+  "issue_tracker": "https://github.com/nosilleg/northern-powergrid-power-cuts/issues",
   "requirements": [],
   "version": "0.1.0"
 }
