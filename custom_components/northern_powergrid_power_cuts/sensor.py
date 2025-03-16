@@ -115,6 +115,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         
         if child_entities:
             async_add_entities(child_entities, True)
+    
+    # Add the latest power cut event sensor
+    latest_event_sensor = LatestPowerCutEventSensor(coordinator, name, postcode, config_entry.entry_id)
+    async_add_entities([latest_event_sensor], True)
 
 
 class PowerCutDataUpdateCoordinator(DataUpdateCoordinator):
@@ -124,6 +128,7 @@ class PowerCutDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         self.session = session
         self.postcode = postcode.upper().replace(" ", "")
+        self._last_known_data = []
 
         super().__init__(
             hass,
@@ -149,12 +154,20 @@ class PowerCutDataUpdateCoordinator(DataUpdateCoordinator):
                         if self.postcode in api_postcode:
                             filtered_data.append(power_cut)
 
+                # Update last known data
+                self._last_known_data = filtered_data
+
                 return filtered_data
         except (aiohttp.ClientError, asyncio.TimeoutError, json.JSONDecodeError) as err:
             raise UpdateFailed(f"Error communicating with API: {err}")
         except Exception as err:
             _LOGGER.exception("Unexpected error fetching data: %s", err)
             raise UpdateFailed(f"Unexpected error: {err}")
+
+    @property
+    def last_known_data(self):
+        """Return the last known data."""
+        return self._last_known_data
 
 
 class PowerCutBaseSensor(CoordinatorEntity, SensorEntity):
@@ -211,6 +224,27 @@ class PowerCutBaseSensor(CoordinatorEntity, SensorEntity):
                 "manufacturer": "Northern Powergrid",
                 "model": "Power Cuts API",
             }
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        if not self.coordinator.data or len(self.coordinator.data) <= self._power_cut_index:
+            return None
+        return self.coordinator.data[self._power_cut_index].get("Reference")
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        if not self.coordinator.data or len(self.coordinator.data) <= self._power_cut_index:
+            return {}
+        power_cut = self.coordinator.data[self._power_cut_index]
+        return {
+            "start_time": power_cut.get("LoggedTime"),
+            "estimated_restoration": power_cut.get("EstimatedTimeTillResolution"),
+            "status": power_cut.get("CustomerStageSequenceMessage"),
+            "reason": power_cut.get("Reason"),
+            "nature": power_cut.get("NatureOfOutage"),
+        }
 
 
 class PowerCutCountSensor(PowerCutBaseSensor):
@@ -421,3 +455,44 @@ class PowerCutNatureSensor(PowerCutBaseSensor):
     def icon(self):
         """Return the icon of the sensor."""
         return "mdi:flash-alert"
+
+
+class LatestPowerCutEventSensor(PowerCutBaseSensor):
+    """Sensor for the latest power cut event."""
+
+    @property
+    def unique_id(self):
+        """Return a unique ID."""
+        return f"{self._entry_id}_latest_event"
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        if not self.coordinator.last_known_data:
+            return None
+        latest_event = max(self.coordinator.last_known_data, key=lambda x: x.get("LoggedTime", ""))
+        return latest_event.get("Reference")
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        if not self.coordinator.last_known_data:
+            return {}
+        latest_event = max(self.coordinator.last_known_data, key=lambda x: x.get("LoggedTime", ""))
+        return {
+            "start_time": latest_event.get("LoggedTime"),
+            "estimated_restoration": latest_event.get("EstimatedTimeTillResolution"),
+            "status": latest_event.get("CustomerStageSequenceMessage"),
+            "reason": latest_event.get("Reason"),
+            "nature": latest_event.get("NatureOfOutage"),
+        }
+
+    @property
+    def icon(self):
+        """Return the icon of the sensor."""
+        return "mdi:alert"
+
+    @property
+    def available(self):
+        """Return if entity is available."""
+        return bool(self.coordinator.last_known_data)
