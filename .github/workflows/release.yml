@@ -1,0 +1,86 @@
+name: Create HACS Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - \'custom_components/northern_powergrid_power_cuts/**\'
+      - \'hacs.json\'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create releases and tags
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # Fetches all history and tags
+
+      - name: Install dependencies (jq for JSON parsing, zip for archiving)
+        run: sudo apt-get update && sudo apt-get install -y jq zip
+
+      - name: Get Version from manifest.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version custom_components/northern_powergrid_power_cuts/manifest.json)
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Determined version: ${VERSION}"
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          TAG_NAME="v${{ steps.get_version.outputs.VERSION }}"
+          echo "Checking for tag: ${TAG_NAME}"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag ${TAG_NAME} already exists. Skipping release."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag ${TAG_NAME} does not exist. Proceeding with release."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create HACS package (ZIP)
+        if: steps.check_tag.outputs.skip == 'false'
+        run: |
+          PACKAGE_NAME="northern-powergrid-power-cuts"
+          VERSIONED_ZIP_FILE_NAME="${PACKAGE_NAME}-v${{ steps.get_version.outputs.VERSION }}.zip"
+          STAGING_DIR="release_staging"
+
+          echo "Preparing package..."
+          mkdir -p "${STAGING_DIR}"
+          cp -R custom_components/northern_powergrid_power_cuts "${STAGING_DIR}/"
+          
+          echo "Creating ZIP file ${VERSIONED_ZIP_FILE_NAME}..."
+          cd "${STAGING_DIR}"
+          zip -r "../${VERSIONED_ZIP_FILE_NAME}" northern_powergrid_power_cuts
+          cd ..
+          
+          echo "Verifying ZIP file..."
+          ls -l "${VERSIONED_ZIP_FILE_NAME}"
+          unzip -l "${VERSIONED_ZIP_FILE_NAME}" # List contents to verify structure
+        id: package_info
+
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.skip == 'false'
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: Release v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            Automated release for Northern Powergrid Power Cuts integration, version ${{ steps.get_version.outputs.VERSION }}.
+            
+            **Installation:**
+            Download the `${{ env.PACKAGE_NAME }}-v${{ steps.get_version.outputs.VERSION }}.zip` file below and extract the `northern_powergrid_power_cuts` folder into your Home Assistant `custom_components` directory.
+            
+            Refer to the [README.md](README.md) for full installation and configuration instructions.
+            Consider adding a CHANGELOG.md to your repository for more detailed release notes.
+          files: northern-powergrid-power-cuts-v${{ steps.get_version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_NAME: northern-powergrid-power-cuts
