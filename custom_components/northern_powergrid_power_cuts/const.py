@@ -1,4 +1,5 @@
 """Constants for the Northern Powergrid Power Cuts integration."""
+
 from datetime import timedelta
 
 DOMAIN = "northern_powergrid_power_cuts"

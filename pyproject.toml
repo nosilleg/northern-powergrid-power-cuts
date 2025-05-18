@@ -1,0 +1,78 @@
+[project]
+name = "northern-powergrid-power-cuts"
+version = "0.2.0"
+description = "Home Assistant integration for Northern Powergrid power cuts"
+readme = "README.md"
+requires-python = "==3.13.3"
+license = {text = "MIT"}
+dependencies = []
+
+[project.scripts]
+bump-version = "scripts.bump_version:main"
+
+[dependency-groups]
+dev = [
+    "homeassistant",
+    "ruff==0.11.10",
+]
+
+[tool.ruff]
+target-version = "py313"
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C90`) by default.
+lint.select = ["ALL"]
+lint.ignore = [
+    # The following rule may cause conflicts when used with the formatter: `COM812`
+    "COM812",
+
+    # Formatting conflicts
+    "D203",
+    "D211",
+    "D213",
+
+    # Temporary ignore until fixed
+    "ANN"
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+lint.per-file-ignores = {}
+
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10

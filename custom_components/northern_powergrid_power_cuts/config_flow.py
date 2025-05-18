@@ -1,23 +1,28 @@
 """Config flow for Northern Powergrid Power Cuts integration."""
+
 import logging
-import voluptuous as vol
+
 import aiohttp
 import async_timeout
-
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
 
 from .const import (
-    DOMAIN,
-    CONF_POSTCODE,
-    CONF_NAME,
-    DEFAULT_NAME,
     API_ENDPOINT,
+    CONF_NAME,
+    CONF_POSTCODE,
+    DEFAULT_NAME,
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+MIN_POSTCODE_LENGTH = 5
+MAX_POSTCODE_LENGTH = 7
+HTTP_OK = 200
+
 
 class NorthernPowergridFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Northern Powergrid Power Cuts."""
@@ -32,7 +37,10 @@ class NorthernPowergridFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Validate postcode format (basic validation)
             postcode = user_input[CONF_POSTCODE].upper().replace(" ", "")
-            if len(postcode) < 5 or len(postcode) > 7:
+            if (
+                len(postcode) < MIN_POSTCODE_LENGTH
+                or len(postcode) > MAX_POSTCODE_LENGTH
+            ):
                 errors[CONF_POSTCODE] = "invalid_postcode"
             else:
                 # Test connection to API
@@ -40,9 +48,9 @@ class NorthernPowergridFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     session = async_get_clientsession(self.hass)
                     with async_timeout.timeout(10):
                         response = await session.get(API_ENDPOINT)
-                        if response.status != 200:
+                        if response.status != HTTP_OK:
                             errors["base"] = "cannot_connect"
-                except (aiohttp.ClientError, asyncio.TimeoutError):
+                except (aiohttp.ClientError, TimeoutError):
                     errors["base"] = "cannot_connect"
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception("Unexpected exception")
@@ -52,7 +60,7 @@ class NorthernPowergridFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     # Create entry
                     await self.async_set_unique_id(postcode)
                     self._abort_if_unique_id_configured()
-                    
+
                     return self.async_create_entry(
                         title=f"Northern Powergrid {user_input[CONF_POSTCODE]}",
                         data=user_input,
@@ -65,7 +73,7 @@ class NorthernPowergridFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_POSTCODE): str,
                     vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
-                }
+                },
             ),
             errors=errors,
         )
@@ -101,6 +109,6 @@ class NorthernPowergridOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_NAME,
                         default=self.config_entry.data.get(CONF_NAME, DEFAULT_NAME),
                     ): str,
-                }
+                },
             ),
         )
