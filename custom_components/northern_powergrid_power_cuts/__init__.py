@@ -13,7 +13,7 @@ DOMAIN = "northern_powergrid_power_cuts"
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def async_setup():
+async def async_setup(hass, config):  # noqa: ARG001 - arguments are required by HA
     """Set up the Northern Powergrid Power Cuts component."""
     return True
 
