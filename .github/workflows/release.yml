@@ -5,8 +5,9 @@ on:
     branches:
       - main
     paths:
-      - \'custom_components/northern_powergrid_power_cuts/**\'
-      - \'hacs.json\'
+      - 'custom_components/northern_powergrid_power_cuts/**'
+      - 'hacs.json'
+      - '.github/workflows/release.yml'
 
 jobs:
   release:
