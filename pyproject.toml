@@ -1,6 +1,6 @@
 [project]
 name = "northern-powergrid-power-cuts"
-version = "0.2.0"
+version = "0.2.1"
 description = "Home Assistant integration for Northern Powergrid power cuts"
 readme = "README.md"
 requires-python = "==3.13.3"
